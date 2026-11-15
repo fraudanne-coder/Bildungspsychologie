@@ -1,0 +1,39 @@
+name: Bildungspsychologie Audio generieren
+
+on:
+  push:
+    paths:
+      - 'bildungspsychologie.csv'
+      - 'generate_audio.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-audio:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Benötigte Bibliothek installieren
+        run: pip install requests
+
+      - name: MP3-Dateien über ElevenLabs erstellen
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+        run: python generate_audio.py
+
+      - name: Neue MP3s ins Repository speichern
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          git add audio/
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Audio-Dateien automatisch generiert" && git push)
